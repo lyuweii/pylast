@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <unordered_map>
 #include "spdlog/spdlog.h"
+#include <iostream>
 using namespace ROOT;
 
 /**
@@ -383,6 +384,7 @@ class RootSimulatedCamera: public NewRootDataLevels<SimulatedCamera>
             true_image = std::move(RVecI(datalevels.true_image.data(), datalevels.true_image.size()));
             fake_image = std::move(RVecD(datalevels.fake_image.data(), datalevels.fake_image.size()));
             fake_image_mask = std::move(RVecB(datalevels.fake_image_mask.data(), datalevels.fake_image_mask.size()));
+            fake_image_parameters = datalevels.fake_image_parameters;
             return *this;
         }
         void initialize_internal_structure(TTree* tree) override
@@ -681,6 +683,9 @@ class RootDL2Camera: public NewRootDataLevels<TelReconstructedParameter>
 
         RootDL2Camera& operator=(TelReconstructedParameter&& other) noexcept
         {
+            reconstructor_name.clear();
+            distance.clear();
+            distance_error.clear();
             datalevels = std::move(other);
             for(const auto& [name, impact] : datalevels.impact_parameters)
             {
@@ -692,6 +697,9 @@ class RootDL2Camera: public NewRootDataLevels<TelReconstructedParameter>
         }
         RootDL2Camera& operator=(const TelReconstructedParameter& other) noexcept
         {
+            distance.clear();
+            reconstructor_name.clear();
+            distance_error.clear();
             datalevels = other;
             for(const auto& [name, impact] : datalevels.impact_parameters)
             {
@@ -715,6 +723,9 @@ class RootDL2Camera: public NewRootDataLevels<TelReconstructedParameter>
         }
         void update_after_get_entry() override
         {
+            reconstructor_name = *reconstructor_name_ptr;
+            distance = *distance_ptr;
+            distance_error = *distance_error_ptr;
             datalevels.impact_parameters.clear();
             for(size_t i = 0; i < reconstructor_name.size(); ++i)
             {
@@ -742,12 +753,14 @@ class RootDL2RecParameter
         {
             tree->Branch("event_id", &event_id);
             TTreeSerializer::branch(tree, parameter);
+            tree->Branch("telescopes", &parameter.telescopes);
         }
         void initialize_read(TTree* tree)
         {
             tree->SetBranchAddress("event_id", &event_id);
             read_tree = tree;
             TTreeSerializer::set_branch_addresses(tree, parameter);
+            tree->SetBranchAddress("telescopes", &telescopes_ptr);
         }
         RootDL2RecParameter& operator=(DL2RecParameter&& other) noexcept
         {
@@ -766,8 +779,10 @@ class RootDL2RecParameter
                 throw std::runtime_error("read_tree is not initialized");
             }
             read_tree->GetEntry(ientry);
+            parameter.telescopes = *telescopes_ptr;
         }
         TTree* read_tree = nullptr;
+        std::vector<int>* telescopes_ptr = nullptr;
 };
 using RootDL2RecGeometry = RootDL2RecParameter<ReconstructedGeometry>;
 using RootDL2RecEnergy = RootDL2RecParameter<ReconstructedEnergy>;
