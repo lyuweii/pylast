@@ -80,20 +80,12 @@ set_target_properties(_pylast_dataframe PROPERTIES
     BUILD_WITH_INSTALL_RPATH TRUE
 )
 
-set_property(TARGET _pylast_dataframe APPEND PROPERTY BUILD_RPATH
-    "$ORIGIN"                               
-    "$<TARGET_FILE_DIR:dataframe>"          
-    ${CMAKE_INSTALL_RPATH}
-    "${PYARROW_LIB_PATH}"                    
-    "$ENV{HOME}/.local/lib"                 
-    "$ENV{HOME}/.local/lib64"
-)
-
 set_property(TARGET _pylast_dataframe APPEND PROPERTY INSTALL_RPATH
     "$ORIGIN"                               
     ${CMAKE_INSTALL_RPATH}
     "$<TARGET_FILE_DIR:dataframe>"
     "$<TARGET_FILE_DIR:basic_event>"
+    "$<TARGET_FILE_DIR:hessio>"
     "${PYARROW_LIB_DIR}"                    
     "$ENV{HOME}/.local/lib"
     "$ENV{HOME}/.local/lib64"

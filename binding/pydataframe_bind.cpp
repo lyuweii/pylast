@@ -10,7 +10,7 @@
 
 namespace nb = nanobind;
 
-PyObject* to_pyarrow(const std::shared_ptr<arrow::Table>& t) {
+PyObject *to_pyarrow(const std::shared_ptr<arrow::Table> &t) {
     // 需要先初始化一次 Arrow <-> Python 桥接
     static bool inited = false;
     if (!inited) {
@@ -20,33 +20,34 @@ PyObject* to_pyarrow(const std::shared_ptr<arrow::Table>& t) {
     return arrow::py::wrap_table(t);
 }
 
-nb::object to_python(const std::shared_ptr<arrow::Table>& t) {
-    return nb::steal(to_pyarrow(t));  // 拿到真正的 pyarrow.Table
+nb::object to_python(const std::shared_ptr<arrow::Table> &t) {
+    return nb::steal(to_pyarrow(t)); 
 }
 
-
 void bind_dataframe(nb::module_ &m) {
-    // 初始化 pyarrow
-    //arrow::py::import_pyarrow();
 
     nb::class_<df::DataTable>(m, "DataTable")
-        .def("simulation_table", [](const df::DataTable &dt) {
-            return to_python(dt.simulation_table);
-        })
-        .def("reconstructor_table", [](const df::DataTable &dt) {
-            return to_python(dt.reconstructor_table);
-        })
-        .def("telescope_table",[](const df::DataTable &dt){
+        .def("simulation_table",
+             [](const df::DataTable &dt) {
+                 return to_python(dt.simulation_table);
+             })
+        .def("reconstructor_table",
+             [](const df::DataTable &dt) {
+                 return to_python(dt.reconstructor_table);
+             })
+        .def("telescope_table", [](const df::DataTable &dt) {
             return to_python(dt.telescope_table);
         });
 
     nb::class_<df::DataFrameMaker>(m, "DataFrame")
         .def(nb::init<EventSource &>(), nb::arg("source"),
              nb::rv_policy::reference_internal)
-        .def("__call__", [](df::DataFrameMaker &self) {
-            // auto t = self();
-            // PyObject *py_table = arrow::py::wrap_table(t);
-            // return nb::steal<nb::object>(py_table);
+        .def("__call__", [](df::DataFrameMaker &self) { return self(); });
+
+    nb::class_<df::MultiThreadedDataFrameMaker>(m,"MTDataFrame")
+        .def(nb::init<EventSource &>(), nb::arg("source"),
+             nb::rv_policy::reference_internal)
+        .def("__call__", [](df::MultiThreadedDataFrameMaker &self) {
             return self();
         });
 }

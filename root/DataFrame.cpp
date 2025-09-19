@@ -7,8 +7,4 @@
 #include <vector>
 namespace df {
 
-    DataTable DataFrameMaker::operator()() {        
-        return build_table();
-    }
-
 } // namespace df

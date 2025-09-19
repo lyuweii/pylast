@@ -31,6 +31,8 @@ include(ExternalProject)
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
+set(ARROW_INSTALL_DIR ${CMAKE_BINARY_DIR}/arrow_install)
+
 # 拉取并构建 Arrow
 ExternalProject_Add(arrow_ep
     GIT_REPOSITORY https://github.com/apache/arrow.git
@@ -61,13 +63,14 @@ ExternalProject_Add(arrow_ep
     BUILD_BYPRODUCTS ${ARROW_INSTALL_DIR}/lib/libarrow.so
 )
 
-set(ARROW_LIB_PATH ${ARROW_INSTALL_DIR}/lib PARENT_SCOPE)
+set(ARROW_LIB_PATH ${ARROW_INSTALL_DIR}/lib)
 
-ExternalProject_Add_Step(arrow_ep copy_pyarrow_header
-    COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "<SOURCE_DIR>/python/pyarrow/src/arrow/python"
-            "${ARROW_INSTALL_DIR}/include/arrow/python"
-    DEPENDEES install   # 等 install 完成后再执行
+ExternalProject_Get_Property(arrow_ep install_dir)
+ExternalProject_Add_Step(arrow_ep install_lib
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+            "${ARROW_LIB_PATH}/libarrow.so"
+            "${CMAKE_INSTALL_PREFIX}/pylast/libarrow.so"
+    DEPENDEES install
 )
 
 set(Arrow_DIR "${ARROW_INSTALL_DIR}/lib/cmake/arrow")
